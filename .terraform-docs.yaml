@@ -1,0 +1,20 @@
+---
+formatter: markdown
+header-from: main.tf
+html: false
+sort:
+  enabled: true
+  by: name
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: false
+  escape: true
+  hide-empty: false
+  html: false
+  indent: 2
+  lockfile: true
+  required: true
+  sensitive: true
+  type: true

@@ -1,0 +1,62 @@
+{
+    "name": "DevContainerByAzurePractice",
+    "build": {
+        "dockerfile": "Dockerfile",
+        // Update 'VARIANT' to pick an Ubuntu version: focal, bionic
+        "args": {
+            "NODE_MAJOR": "20",
+            "TF_VERSION": "1.5.6-1",
+            "TFDOCS_VERSION": "0.16.0",
+            "TFSEC_VERSION": "1.28.0",
+            "AZCLI_VERSION": "2.40.0",
+            "POWERSHELL_VERSION": "7.3.6-1.deb",
+            "HTTP_PROXY": "${localEnv:HTTP_PROXY}",
+            "HTTPS_PROXY": "${localEnv:HTTPS_PROXY}"
+        }
+    },
+    // Set *default* container specific settings.json values on container create.
+    "workspaceFolder": "/home/vscode/workspace",
+    "workspaceMount": "source=${localWorkspaceFolder},target=//home/vscode/workspace,type=bind,consistency=delegated",
+    // Add the IDs of extensions you want installed when the container is created.
+    "customizations": {
+        "vscode": {
+            "settings": {},
+            "extensions": [
+                "4ops.terraform",
+                "mutantdino.resourcemonitor",
+                "ms-azure-devops.azure-pipelines",
+                "damienaicheh.azure-devops-snippets",
+                "omartawfik.github-actions-vscode",
+                "hashicorp.terraform",
+                "ms-azuretools.vscode-azureterraform",
+                "run-at-scale.terraform-doc-snippets",
+                "ms-vscode.vscode-node-azure-pack",
+                "mhutchie.git-graph",
+                "yzhang.markdown-all-in-one",
+                "davidanson.vscode-markdownlint",
+                "hediet.vscode-drawio",
+                "gitlab.gitlab-workflow",
+                "bierner.markdown-emoji",
+                "esbenp.prettier-vscode",
+                "Infracost.infracost",
+                "fabiospampinato.vscode-diff",
+                "ryu1kn.partial-diff",
+                "ms-vscode.PowerShell"
+            ]
+        }
+    },
+    // Add the IDs of extensions you want installed when the container is created in the array below.
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // "forwardPorts": [
+    //   8400
+    // ],
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "sh ./.devcontainer/postscript.sh",
+    // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "containerUser": "vscode",
+    "remoteUser": "vscode",
+    "updateRemoteUserUID": true,
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=delegated"
+    ]
+}

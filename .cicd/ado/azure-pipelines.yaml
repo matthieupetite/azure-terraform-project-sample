@@ -1,0 +1,144 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+variables:
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  isPR: $[eq(variables['Build.Reason'], 'PullRequest')]
+  isCI: $[or(eq(variables['Build.Reason'], 'IndividualCI'),eq(variables['Build.Reason'], 'BatchedCI'))]
+
+trigger:
+  branches:
+    include:
+      - main
+      
+jobs:
+  - job: calculate_artefact_version
+    displayName: Calculate Artefact Version
+    pool:
+      name: default
+      demands:
+        - Agent.OS -equals Linux
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '16.x'
+      - bash: |
+          PACKAGEJSON_VERSION=$(node --eval="process.stdout.write(require('./package.json').version)")
+          echo "##vso[task.setvariable variable=result;isoutput=true]$PACKAGEJSON_VERSION"
+        name: get_packagejson_version
+      - bash: |
+          REASON_ABBREVIATION="PR"
+          if [ "$(isCI)" = 'True' ]; then
+            REASON_ABBREVIATION="CI";
+          fi
+          ARTEFACT_VERSION=$(get_packagejson_version.result)-$REASON_ABBREVIATION-$(Build.BuildNumber)
+          echo "##vso[task.setvariable variable=result;isoutput=true]$ARTEFACT_VERSION"
+          echo "##vso[build.updatebuildnumber]$ARTEFACT_VERSION"
+        name: get_artefact_version
+      - bash: |
+          echo Artefact Version: $(get_artefact_version.result)
+        displayName: Print artefact version
+
+  - job: yaml_lint
+    displayName: Yaml Lint
+    dependsOn: ['calculate_artefact_version']
+    pool:
+      name: default
+      demands:
+        - Agent.OS -equals Linux
+    steps:
+      - checkout: self
+        persistCredentials: true
+      
+      - task: DevcontainersCi@0
+        displayName: Yaml Lint
+        inputs:
+          imageName: 'ocbpractice.azurecr.io/dev-container/terraform'
+          imageTag: '1.0.0'
+          runCmd: 'npm install && npm run yaml:lint'
+          skipContainerUserIdUpdate: false
+          push: 'never'
+
+  - job: terraform_format
+    displayName: Terraform Format
+    dependsOn: ['calculate_artefact_version']
+    pool:
+      name: default
+      demands:
+        - Agent.OS -equals Linux
+    steps:
+      - checkout: self
+        persistCredentials: true
+      - task: DevcontainersCi@0
+        displayName: Check Terraform format
+        inputs:
+          imageName: 'ocbpractice.azurecr.io/dev-container/terraform'
+          imageTag: '1.0.0'
+          runCmd: 'npm install && npm run terraform:fmt:check'
+          skipContainerUserIdUpdate: false
+          push: 'never'
+
+  - job: terraform_validate
+    displayName: Terraform Validate
+    dependsOn: ['calculate_artefact_version']
+    pool:
+      name: default
+      demands:
+        - Agent.OS -equals Linux
+    steps:
+      
+      - task: DevcontainersCi@0
+        displayName: Terraform Validate
+        inputs:
+          imageName: 'ocbpractice.azurecr.io/dev-container/terraform'
+          imageTag: '1.0.0'
+          runCmd: 'npm install && npm run terraform:validate'
+          skipContainerUserIdUpdate: false
+          push: 'never'
+  - job: terraform_tfsec
+    displayName: Terraform Static Tfsec
+    dependsOn: ['calculate_artefact_version']
+    pool:
+      name: default
+      demands:
+        - Agent.OS -equals Linux
+    steps:
+      - checkout: self
+        persistCredentials: true
+      - task: DevcontainersCi@0
+        displayName: Terraform Static Tfsec
+        inputs:
+          imageName: 'ocbpractice.azurecr.io/dev-container/terraform'
+          imageTag: '1.0.0'
+          runCmd: 'npm install && npm run terraform:tfsec:static'
+          skipContainerUserIdUpdate: false
+          push: 'never'
+
+  - job: release
+    displayName: Release
+    condition: and(succeeded(),eq(variables.isCI, 'true'),eq(variables.isMain, 'true'))
+    dependsOn:
+      [
+        'calculate_artefact_version',
+        'yaml_lint',
+        'terraform_format',
+        'terraform_validate',
+        'terraform_tfsec',
+      ]
+    pool:
+      name: default
+      demands:
+        - Agent.OS -equals Linux
+    steps:
+      - checkout: self
+        clean: true
+        persistCredentials: true
+      - task: DevcontainersCi@0
+        displayName: Add tag to repository and update changelog
+        inputs:
+          imageName: 'ocbpractice.azurecr.io/dev-container/terraform'
+          imageTag: '1.0.0'
+          runCmd: 'git config  user.name "Practice Azure CI" && git config user.email "autobuild@orange.com" && git checkout main && git pull && npm install && npm run release'
+          skipContainerUserIdUpdate: false
+          push: 'never'

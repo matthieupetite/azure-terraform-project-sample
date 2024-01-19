@@ -1,0 +1,16 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+[ -n "$CI" ] && exit 0
+
+npm run yaml:lint 
+npm run terraform:validate 
+npm run terraform:fmt:fix 
+npm run terraform:docs 
+# npm run prettier:fix  # to add when a javacript file is present
+# git add *\*.js
+npm run markdown:fix 
+npm run terraform:tfsec:static 
+git add *\*.tf
+git add *\*.md 
+npx --no-install lint-staged

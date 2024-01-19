@@ -1,0 +1,91 @@
+include:
+  - project: 'dt-git-public/gitlab-ci-templates'
+    ref: v0.14.0
+    file: '/docker/build_to_artifactory.yml'
+
+workflow:
+  rules:
+    - if: ($CI_PIPELINE_SOURCE == 'merge_request_event' || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH )
+
+stages:
+  - builddocker
+  - build
+
+build_docker_container:
+  extends: .build_image_to_with_kaniko
+  tags:
+    - himem
+  stage: builddocker
+  variables:
+    REPO: '$REPO'
+    IMAGE: devcontainer
+    TAGS: latest
+    FOLDER: .devcontainer
+    REGISTRY: '$REGISTRY_URL'
+    REGISTRY_USER: '$REGISTRY_USER'
+    REGISTRY_PASSWORD: '$REGISTRY_PASSWORD'
+  rules:
+    - changes:
+        - .devcontainer/**
+
+yaml_lint:
+  image: '$REGISTRY_URL/$REPO/azure-ubuntu-devbox:1.0.0'
+  variables:
+    DOCKER_AUTH_CONFIG: '{"auths":{"$REGISTRY":{"username":"$REGISTRY_USER","password":"$REGISTRY_PASSWORD"}}}'
+  stage: build
+  script:
+    - node -v
+    - npm install
+    - npm run yaml:lint
+
+terraform_format:
+  image: '$REGISTRY_URL/$REPO/azure-ubuntu-devbox:1.0.0'
+  variables:
+    DOCKER_AUTH_CONFIG: '{"auths":{"$REGISTRY":{"username":"$REGISTRY_USER","password":"$REGISTRY_PASSWORD"}}}'
+  stage: build
+  script:
+    - node -v
+    - npm install
+    - npm run terraform:fmt:check
+
+terraform_validate:
+  image: '$REGISTRY_URL/$REPO/azure-ubuntu-devbox:1.0.0'
+  variables:
+    DOCKER_AUTH_CONFIG: '{"auths":{"$REGISTRY":{"username":"$REGISTRY_USER","password":"$REGISTRY_PASSWORD"}}}'
+  stage: build
+  script:
+    - node -v
+    - npm install
+    - npm run terraform:validate
+
+terraform_tfsec:
+  image: '$REGISTRY_URL/$REPO/azure-ubuntu-devbox:1.0.0'
+  variables:
+    DOCKER_AUTH_CONFIG: '{"auths":{"$REGISTRY":{"username":"$REGISTRY_USER","password":"$REGISTRY_PASSWORD"}}}'
+  stage: build
+  script:
+    - node -v
+    - npm install
+    - npm run terraform:tfsec:static
+
+release_version:
+  image: '$REGISTRY_URL/$REPO/azure-ubuntu-devbox:1.0.0'
+  variables:
+    DOCKER_AUTH_CONFIG: '{"auths":{"$REGISTRY":{"username":"$REGISTRY_USER","password":"$REGISTRY_PASSWORD"}}}'
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+  before_script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - git config --global pull.rebase true
+    - git config --global fetch.prune true
+    - git remote set-url --push origin  https://gitlab-ci-token:${API_KEY}@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+    - git fetch --all && git checkout main && git reset --hard origin/main
+  script:
+    - node -v
+    - npm install
+    - export GIT_SSL_NO_VERIFY=true && git config --global user.email "alexandre.saker@orange.com" && git config --global user.name "Alexandre SAKER" && npm install && npm run release
+  needs: ['yaml_lint', 'terraform_format', 'terraform_validate', 'terraform_tfsec']
