@@ -2,10 +2,15 @@
 
 ## Overview
 
-The Terraform Starter Kit aims to allow the Cloud engineer to be efficient right away, not worrying on having to scaffold
-boiler plate code.
-The tooling used is based on open source libraries and executables (Big shout out to the people contributing 👏)
-and delivers pre-built pipelines for Azure Devops and Gitlab CI.
+This repo aims to help user to start with terraform on azure by providing studends a small project ecosystem and a case study to implement.
+
+## Case Studies
+
+The current case studies aims to deploy a windows datacenter 2019.
+
+The architecture we aim to build is the 
+
+
 
 ## Pre-requisites
 
