@@ -28,7 +28,7 @@
     "terraform:docs": "sh ./scripts/create-terraform-docs.sh",
     "terraform:generate-tfvars": "terraform-docs tfvars hcl infra > infra/terraform.tfvars",
     "terraform:tfsec:static": "cd  infra && tfsec .",
-    "terraform:plan": "cd  infra && terraform init -backend-config backend.tfvars -reconfigure -upgrade && terraform plan -var-file terraform.tfvars  -out plan.out",
+    "terraform:plan": "cd  infra && terraform init -reconfigure -upgrade -backend-config backend.tfvars && terraform plan -var-file terraform.tfvars  -out plan.out",
     "terraform:apply": "cd  infra && terraform apply plan.out",
     "terraform:destroy": "cd  infra && terraform destroy -auto-approve",
     "validate": "run-p terraform:validate terraform:fmt:check eslint:check prettier:check",
