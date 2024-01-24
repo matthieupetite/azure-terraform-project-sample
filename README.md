@@ -12,8 +12,6 @@ The architecture we aim to build is the following:
 
 ![architecture](./doc/schema.png)
 
-
-
 ## Pre-requisites
 
 In order to be efficient right away and make sure you have the right tooling, we based our starter kit on a **devcontainer**
@@ -55,281 +53,280 @@ Therefore PLEASE use it!😎
 
 #### Write your code
 
-  1. Create a provider.tf file
+1. Create a provider.tf file
 
-  ```terraform
-  terraform {
-    required_providers {
-      azurerm = {
-        source  = "hashicorp/azurerm"
-        version = "=3.83.0"
-      }
-      azurecaf = {
-        source  = "aztfmod/azurecaf"
-        version = "=1.2.26"
-      }
-    }
+   ```terraform
+   terraform {
+     required_providers {
+       azurerm = {
+         source  = "hashicorp/azurerm"
+         version = "=3.83.0"
+       }
+       azurecaf = {
+         source  = "aztfmod/azurecaf"
+         version = "=1.2.26"
+       }
+     }
+ 
+     backend "azurerm" {}
+   }
+ 
+   provider "azurerm" {
+     subscription_id = ""
+     features {}
+   }
+ 
+   provider "azurecaf" {
+   }
+   ```
 
-    backend "azurerm" {}
-  }
+2. Create a main.tf file
 
-  provider "azurerm" {
-    subscription_id = ""
-    features {}
-  }
+   ```terraform
+     /**
+   * # Main title
+   *
+   * Everything in this comment block will get extracted.
+   *
+   * You can put simple text or complete Markdown content
+   * here. Subsequently if you want to render AsciiDoc format
+   * you can put AsciiDoc compatible content in this comment
+   * block.
+   * Start implementing your terraform code here 😎
+   */
+ 
+   locals {
+     tags = {
+       "env"  = "training"
+       "team" = "petroineos"
+       "date" = var.localdate
+     }
+   }
+ 
+   resource "azurerm_resource_group" "rg" {
+     name     = azurecaf_name.rg.result
+     location = var.location
+     tags     = local.tags
+   }
+   ```
 
-  provider "azurecaf" {
-  }
-  ```
+3. Create an naming.tf file
 
-  2. Create a main.tf file
+   ```
+   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+   resource "azurecaf_name" "rg" {
+     name          = var.resource_name
+     resource_type = "azurerm_resource_group"
+     suffixes      = [var.location_abbreviation, "001"]
+     clean_input   = true
+   }
+ 
+   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+   resource "azurecaf_name" "vnet" {
+     name          = var.resource_name
+     resource_type = "azurerm_virtual_network"
+     suffixes      = [var.location_abbreviation, "001"]
+     clean_input   = true
+   }
+ 
+   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+   resource "azurecaf_name" "subnet" {
+     name          = var.resource_name
+     resource_type = "azurerm_subnet"
+     suffixes      = [var.location_abbreviation, "001"]
+     clean_input   = true
+   }
+ 
+   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+   resource "azurecaf_name" "vm" {
+     name          = var.resource_name
+     resource_type = "azurerm_windows_virtual_machine"
+     suffixes      = [var.location_abbreviation, "001"]
+     clean_input   = true
+   }
+ 
+   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+   resource "azurecaf_name" "nic" {
+     name          = var.resource_name
+     resource_type = "azurerm_network_interface"
+     suffixes      = [var.location_abbreviation, "001"]
+     clean_input   = true
+   }
+ 
+   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+   resource "azurecaf_name" "publicip" {
+     name          = var.resource_name
+     resource_type = "azurerm_public_ip"
+     suffixes      = [var.location_abbreviation, "001"]
+     clean_input   = true
+   }
+ 
+   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+   resource "azurecaf_name" "nsg" {
+     name          = var.resource_name
+     resource_type = "azurerm_network_security_group"
+     suffixes      = [var.location_abbreviation, "001"]
+   }
+   ```
 
-  ```terraform
-    /**
-  * # Main title
-  *
-  * Everything in this comment block will get extracted.
-  *
-  * You can put simple text or complete Markdown content
-  * here. Subsequently if you want to render AsciiDoc format
-  * you can put AsciiDoc compatible content in this comment
-  * block.
-  * Start implementing your terraform code here 😎
-  */
+4. Create a network.tf file
 
-  locals {
-    tags = {
-      "env"  = "training"
-      "team" = "petroineos"
-      "date" = var.localdate
-    }
-  }
+   ```  
+   # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network
+   resource "azurerm_virtual_network" "vnet" {
+     name                = azurecaf_name.vnet.result
+     resource_group_name = azurerm_resource_group.rg.name
+     location            = var.location
+     address_space       = ["192.168.0.0/24"]
+     tags                = local.tags
+   }
+ 
+   # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet
+   resource "azurerm_subnet" "subnet" {
+     name                 = azurecaf_name.subnet.result
+     resource_group_name  = azurerm_resource_group.rg.name
+     virtual_network_name = azurerm_virtual_network.vnet.name
+     address_prefixes     = ["192.168.0.0/25"]
+   }
+ 
+   # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip
+   resource "azurerm_public_ip" "publicip" {
+     name                = azurecaf_name.publicip.result
+     location            = var.location
+     resource_group_name = azurerm_resource_group.rg.name
+     allocation_method   = "Dynamic"
+   }
+ 
+   # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface
+   resource "azurerm_network_interface" "nic" {
+     name                = azurecaf_name.nic.result
+     location            = var.location
+     resource_group_name = azurerm_resource_group.rg.name
+ 
+     ip_configuration {
+       name                          = "internal"
+       subnet_id                     = azurerm_subnet.subnet.id
+       public_ip_address_id          = azurerm_public_ip.publicip.id
+       private_ip_address_allocation = "Dynamic"
+     }
+   }
+   ```
 
-  resource "azurerm_resource_group" "rg" {
-    name     = azurecaf_name.rg.result
-    location = var.location
-    tags     = local.tags
-  }
-  ```
+5. Create a security.tf file
 
-  3. Create an naming.tf file
+   ```
+   # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_security_group
+   #tfsec:ignore:azure-network-no-public-ingress
+   #tfsec:ignore:azure-network-disable-rdp-from-internet
+   resource "azurerm_network_security_group" "nsg" {
+     name                = azurecaf_name.nsg.result
+     location            = var.location
+     resource_group_name = azurerm_resource_group.rg.name
+ 
+     security_rule {
+       name                       = "RDP"
+       priority                   = 1001
+       direction                  = "Inbound"
+       access                     = "Allow"
+       protocol                   = "Tcp"
+       source_port_range          = "*"
+       destination_port_range     = "3389"
+       source_address_prefix      = "*"
+       destination_address_prefix = "*"
+     }
+   }
+ 
+   # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_network_security_group_association
+   resource "azurerm_subnet_network_security_group_association" "association" {
+     subnet_id                 = azurerm_subnet.subnet.id
+     network_security_group_id = azurerm_network_security_group.nsg.id
+   }
+   ```
 
-  ```
-  # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-  resource "azurecaf_name" "rg" {
-    name          = var.resource_name
-    resource_type = "azurerm_resource_group"
-    suffixes      = [var.location_abbreviation, "001"]
-    clean_input   = true
-  }
+6. create a variable.tf file
 
-  # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-  resource "azurecaf_name" "vnet" {
-    name          = var.resource_name
-    resource_type = "azurerm_virtual_network"
-    suffixes      = [var.location_abbreviation, "001"]
-    clean_input   = true
-  }
+   ```
+   variable "location" {
+     type        = string
+     description = "Location of the resources"
+     default     = "North Europe"
+   }
+ 
+   variable "location_abbreviation" {
+     type        = string
+     description = "Location abbreviation of the resources"
+     default     = "northeu"
+   }
+ 
+   variable "localdate" {
+     type        = string
+     description = "Local Date"
+     default     = "15122022"
+   }
+ 
+   variable "resource_name" {
+     type    = string
+     default = "default_resource_name"
+   }
+ 
+   variable "admin_password" {
+     type      = string
+     default   = "default_admin_password"
+     sensitive = true
+   }
+ 
+   variable "admin_username" {
+     type    = string
+     default = "default_admin_username"
+   }
+   ```
 
-  # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-  resource "azurecaf_name" "subnet" {
-    name          = var.resource_name
-    resource_type = "azurerm_subnet"
-    suffixes      = [var.location_abbreviation, "001"]
-    clean_input   = true
-  }
+7. create a virtualmachine.tf file
 
-  # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-  resource "azurecaf_name" "vm" {
-    name          = var.resource_name
-    resource_type = "azurerm_windows_virtual_machine"
-    suffixes      = [var.location_abbreviation, "001"]
-    clean_input   = true
-  }
+   ```
+   # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_virtual_machine
+   resource "azurerm_windows_virtual_machine" "vm" {
+     name                  = azurecaf_name.vm.result
+     resource_group_name   = azurerm_resource_group.rg.name
+     location              = var.location
+     size                  = "Standard_D2s_v3"
+     admin_username        = var.admin_username
+     admin_password        = var.admin_password
+     network_interface_ids = [azurerm_network_interface.nic.id]
+ 
+     os_disk {
+       caching              = "ReadWrite"
+       storage_account_type = "Standard_LRS"
+     }
+ 
+     source_image_reference {
+       publisher = "MicrosoftWindowsServer"
+       offer     = "WindowsServer"
+       sku       = "2019-Datacenter"
+       version   = "latest"
+     }
+   }
+ 
+   ```
 
-  # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-  resource "azurecaf_name" "nic" {
-    name          = var.resource_name
-    resource_type = "azurerm_network_interface"
-    suffixes      = [var.location_abbreviation, "001"]
-    clean_input   = true
-  }
+8. Create an ouput.tf file
 
-  # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-  resource "azurecaf_name" "publicip" {
-    name          = var.resource_name
-    resource_type = "azurerm_public_ip"
-    suffixes      = [var.location_abbreviation, "001"]
-    clean_input   = true
-  }
-
-  # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-  resource "azurecaf_name" "nsg" {
-    name          = var.resource_name
-    resource_type = "azurerm_network_security_group"
-    suffixes      = [var.location_abbreviation, "001"]
-  }
-  ```
-
-  4. Create a network.tf file
-
-    ```  
-    # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network
-    resource "azurerm_virtual_network" "vnet" {
-      name                = azurecaf_name.vnet.result
-      resource_group_name = azurerm_resource_group.rg.name
-      location            = var.location
-      address_space       = ["192.168.0.0/24"]
-      tags                = local.tags
-    }
-
-    # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet
-    resource "azurerm_subnet" "subnet" {
-      name                 = azurecaf_name.subnet.result
-      resource_group_name  = azurerm_resource_group.rg.name
-      virtual_network_name = azurerm_virtual_network.vnet.name
-      address_prefixes     = ["192.168.0.0/25"]
-    }
-
-    # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip
-    resource "azurerm_public_ip" "publicip" {
-      name                = azurecaf_name.publicip.result
-      location            = var.location
-      resource_group_name = azurerm_resource_group.rg.name
-      allocation_method   = "Dynamic"
-    }
-
-    # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface
-    resource "azurerm_network_interface" "nic" {
-      name                = azurecaf_name.nic.result
-      location            = var.location
-      resource_group_name = azurerm_resource_group.rg.name
-
-      ip_configuration {
-        name                          = "internal"
-        subnet_id                     = azurerm_subnet.subnet.id
-        public_ip_address_id          = azurerm_public_ip.publicip.id
-        private_ip_address_allocation = "Dynamic"
-      }
-    }
-    ```
-
-  5. Create a security.tf file
-
-  ```
-  # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_security_group
-  #tfsec:ignore:azure-network-no-public-ingress
-  #tfsec:ignore:azure-network-disable-rdp-from-internet
-  resource "azurerm_network_security_group" "nsg" {
-    name                = azurecaf_name.nsg.result
-    location            = var.location
-    resource_group_name = azurerm_resource_group.rg.name
-
-    security_rule {
-      name                       = "RDP"
-      priority                   = 1001
-      direction                  = "Inbound"
-      access                     = "Allow"
-      protocol                   = "Tcp"
-      source_port_range          = "*"
-      destination_port_range     = "3389"
-      source_address_prefix      = "*"
-      destination_address_prefix = "*"
-    }
-  }
-
-  # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_network_security_group_association
-  resource "azurerm_subnet_network_security_group_association" "association" {
-    subnet_id                 = azurerm_subnet.subnet.id
-    network_security_group_id = azurerm_network_security_group.nsg.id
-  }
-  ```
-
-  6. create a variable.tf file
-
-  ```
-  variable "location" {
-    type        = string
-    description = "Location of the resources"
-    default     = "North Europe"
-  }
-
-  variable "location_abbreviation" {
-    type        = string
-    description = "Location abbreviation of the resources"
-    default     = "northeu"
-  }
-
-  variable "localdate" {
-    type        = string
-    description = "Local Date"
-    default     = "15122022"
-  }
-
-  variable "resource_name" {
-    type    = string
-    default = "default_resource_name"
-  }
-
-  variable "admin_password" {
-    type      = string
-    default   = "default_admin_password"
-    sensitive = true
-  }
-
-  variable "admin_username" {
-    type    = string
-    default = "default_admin_username"
-  }
-  ```
-
-  7. create a virtualmachine.tf file
-   
-  ```
-  # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_virtual_machine
-  resource "azurerm_windows_virtual_machine" "vm" {
-    name                  = azurecaf_name.vm.result
-    resource_group_name   = azurerm_resource_group.rg.name
-    location              = var.location
-    size                  = "Standard_D2s_v3"
-    admin_username        = var.admin_username
-    admin_password        = var.admin_password
-    network_interface_ids = [azurerm_network_interface.nic.id]
-
-    os_disk {
-      caching              = "ReadWrite"
-      storage_account_type = "Standard_LRS"
-    }
-
-    source_image_reference {
-      publisher = "MicrosoftWindowsServer"
-      offer     = "WindowsServer"
-      sku       = "2019-Datacenter"
-      version   = "latest"
-    }
-  }
-
-  ```
-
-  8. Create an ouput.tf file
-
-  ```
-  output "rg_name" {
-    description = "This is the output of the resource group name"
-    value       = azurerm_resource_group.rg.name
-  }
-
-  output "rg_location" {
-    description = "This is the output of the resource group location"
-    value       = azurerm_resource_group.rg.location
-  }
-
-  output "public_ip" {
-    description = "This is the output of the public ip"
-    value       = azurerm_public_ip.publicip.ip_address
-  }
-  ```
-
+   ```
+   output "rg_name" {
+     description = "This is the output of the resource group name"
+     value       = azurerm_resource_group.rg.name
+   }
+ 
+   output "rg_location" {
+     description = "This is the output of the resource group location"
+     value       = azurerm_resource_group.rg.location
+   }
+ 
+   output "public_ip" {
+     description = "This is the output of the public ip"
+     value       = azurerm_public_ip.publicip.ip_address
+   }
+   ```
 
 #### Configure your backend
 
@@ -342,7 +339,7 @@ Therefore PLEASE use it!😎
   key                  = "dev.terraform.tfstate"
   ```
 
-#### Generate your variable file and populate it 
+#### Generate your variable file and populate it
 
    Generate terraform.tfvars file with the following command and update variables
 
@@ -360,8 +357,7 @@ Therefore PLEASE use it!😎
    location_abbreviation = "northeu"
    resource_name         = "mpe"
    ```
-   
-   
+
    Please fill the information
 
 #### Plan your infrastructure
@@ -407,4 +403,3 @@ npm run commit
 # or
 npx cz
 ```
-

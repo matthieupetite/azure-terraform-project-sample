@@ -2,7 +2,7 @@
   "name": "demo-petroineos",
   "version": "0.0.1",
   "contributors": [
-    "Alexandre SAKER <alexandre.saker@orange.com>"
+    "Matthieu PETITE <matthieu.petite@orange.com"
   ],
   "description": "This repository aims to provide a basic repository to start using terraform",
   "type": "module",
