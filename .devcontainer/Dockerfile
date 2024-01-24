@@ -56,6 +56,9 @@ RUN echo ${HTTP_PROXY} && echo ${HTTPS_PROXY} \
     && pip install mdformat-gfm 
   
 
+# Add Certificates 
+COPY *.crt /usr/local/share/ca-certificates
+RUN update-ca-certificates
 
 
 # Add Terraform

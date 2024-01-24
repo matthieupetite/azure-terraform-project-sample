@@ -48,7 +48,7 @@ resource "azurecaf_name" "publicip" {
 
 # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
 resource "azurecaf_name" "nsg" {
-  name = var.resource_name
+  name          = var.resource_name
   resource_type = "azurerm_network_security_group"
-  suffixes = [var.location_abbreviation, "001"]
+  suffixes      = [var.location_abbreviation, "001"]
 }

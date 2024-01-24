@@ -18,17 +18,17 @@ variable "localdate" {
 }
 
 variable "resource_name" {
-    type    = string
-    default = "default_resource_name"
+  type    = string
+  default = "default_resource_name"
 }
 
 variable "admin_password" {
-    type    = string
-    default = "default_admin_password"
-    sensitive = true
+  type      = string
+  default   = "default_admin_password"
+  sensitive = true
 }
 
 variable "admin_username" {
-    type    = string
-    default = "default_admin_username"
+  type    = string
+  default = "default_admin_username"
 }
