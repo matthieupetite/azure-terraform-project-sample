@@ -1,4 +1,4 @@
-# Starter Kit Terraform
+[# Starter Kit Terraform
 
 ## Overview
 
@@ -10,7 +10,7 @@ The current case studies aims to deploy a windows datacenter 2019.
 
 The architecture we aim to build is the following:
 
-![architecture](./doc/schema.png)
+!\[architecture\](./doc/schema.png)
 
 
 
@@ -119,7 +119,7 @@ Therefore PLEASE use it!😎
   resource "azurecaf_name" "rg" {
     name          = var.resource_name
     resource_type = "azurerm_resource_group"
-    suffixes      = [var.location_abbreviation, "001"]
+    suffixes      = \[var.location_abbreviation, "001"\]
     clean_input   = true
   }
 
@@ -127,7 +127,7 @@ Therefore PLEASE use it!😎
   resource "azurecaf_name" "vnet" {
     name          = var.resource_name
     resource_type = "azurerm_virtual_network"
-    suffixes      = [var.location_abbreviation, "001"]
+    suffixes      = \[var.location_abbreviation, "001"\]
     clean_input   = true
   }
 
@@ -135,7 +135,7 @@ Therefore PLEASE use it!😎
   resource "azurecaf_name" "subnet" {
     name          = var.resource_name
     resource_type = "azurerm_subnet"
-    suffixes      = [var.location_abbreviation, "001"]
+    suffixes      = \[var.location_abbreviation, "001"\]
     clean_input   = true
   }
 
@@ -143,7 +143,7 @@ Therefore PLEASE use it!😎
   resource "azurecaf_name" "vm" {
     name          = var.resource_name
     resource_type = "azurerm_windows_virtual_machine"
-    suffixes      = [var.location_abbreviation, "001"]
+    suffixes      = \[var.location_abbreviation, "001"\]
     clean_input   = true
   }
 
@@ -151,7 +151,7 @@ Therefore PLEASE use it!😎
   resource "azurecaf_name" "nic" {
     name          = var.resource_name
     resource_type = "azurerm_network_interface"
-    suffixes      = [var.location_abbreviation, "001"]
+    suffixes      = \[var.location_abbreviation, "001"\]
     clean_input   = true
   }
 
@@ -159,7 +159,7 @@ Therefore PLEASE use it!😎
   resource "azurecaf_name" "publicip" {
     name          = var.resource_name
     resource_type = "azurerm_public_ip"
-    suffixes      = [var.location_abbreviation, "001"]
+    suffixes      = \[var.location_abbreviation, "001"\]
     clean_input   = true
   }
 
@@ -167,7 +167,7 @@ Therefore PLEASE use it!😎
   resource "azurecaf_name" "nsg" {
     name          = var.resource_name
     resource_type = "azurerm_network_security_group"
-    suffixes      = [var.location_abbreviation, "001"]
+    suffixes      = \[var.location_abbreviation, "001"\]
   }
   ```
 
@@ -179,7 +179,7 @@ Therefore PLEASE use it!😎
       name                = azurecaf_name.vnet.result
       resource_group_name = azurerm_resource_group.rg.name
       location            = var.location
-      address_space       = ["192.168.0.0/24"]
+      address_space       = \["192.168.0.0/24"\]
       tags                = local.tags
     }
 
@@ -188,7 +188,7 @@ Therefore PLEASE use it!😎
       name                 = azurecaf_name.subnet.result
       resource_group_name  = azurerm_resource_group.rg.name
       virtual_network_name = azurerm_virtual_network.vnet.name
-      address_prefixes     = ["192.168.0.0/25"]
+      address_prefixes     = \["192.168.0.0/25"\]
     }
 
     # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip
@@ -294,7 +294,7 @@ Therefore PLEASE use it!😎
     size                  = "Standard_D2s_v3"
     admin_username        = var.admin_username
     admin_password        = var.admin_password
-    network_interface_ids = [azurerm_network_interface.nic.id]
+    network_interface_ids = \[azurerm_network_interface.nic.id\]
 
     os_disk {
       caching              = "ReadWrite"
@@ -399,7 +399,7 @@ Therefore PLEASE use it!😎
 ## Semantic versioning
 
 In order to be able to build automation processes around the versioning we need consistency our git messages management.
-[Commitizen](https://www.npmjs.com/package/commitizen) will help us use git in a conventinal manner.
+\[Commitizen\](https://www.npmjs.com/package/commitizen) will help us use git in a conventinal manner.
 To commit your code, you can use the following commands.
 
 ```bash
@@ -407,4 +407,3 @@ npm run commit
 # or
 npx cz
 ```
-
