@@ -20,7 +20,75 @@ Therefore PLEASE use it!😎
 
 ## Quick start
 
-### Prepare your environment
+### Prepare your remote backend
+
+In order to work with Terraform you need to set up a [remote backend on azure](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm). This remote backend will store the terraform state of your project, that way you will be able to share it with other developper and a CI/CD process. Doing this will prepare yourself to have a real production ready developpement process.
+
+#### Login on azure portal
+
+Please navigate to the following url [https://portal.azure.com](https://portal.azure.com) and navigate to your subcription.
+
+You must see your subscription name like shown on the following picture
+
+![subscription](./doc/assets/main-readme/000001.jpg)
+
+#### Create a resources group for your launchpad resources
+
+On the left menu click on the resource groups entry and then on the create option
+
+![subscription](./doc/assets/main-readme/000003.jpg)
+
+The resource group wizard is now displayed
+
+![resource group creation](./doc/assets/main-readme/000004.jpg)
+
+Set a name for your brand new resource group and fill the location with the nearest location of your team. Then click on the "Review & Create" button.
+
+After few seconds, you will see in your subscription a new resource group.
+
+![resource group created](./doc/assets/main-readme/000005.jpg)
+
+#### Create your storage account
+
+Click on your resouce group name to enter in it. Then, click on the Create button to create a new storage account.
+
+![enter the resource group](./doc/assets/main-readme/000007.jpg)
+
+The azure market place is now open. Please lookup for a "storage account" and then create on the button "create" above the storage account product.
+
+![storage account start wizard](./doc/assets/main-readme/000008.jpg)
+
+This action will launch the storage account creation wizard. Fill it with the necessary informantion.
+
+1. On the first tab fill the forms like this. Ensure you have a unique name.
+  
+    ![storage account start wizard](./doc/assets/main-readme/000009.jpg)
+
+2. leave all other option as default and click on the create button at the end of the wizard.
+
+Leave the creation process go until the end and then navigate to your resource group to check that the new storage account is well created.
+
+  ![storage account creation](./doc/assets/main-readme/000010.jpg)
+
+#### Create a blob container inside your storage account
+
+In order to store the terraform state file used in our project we must create a blob storage inside our new storage account.
+
+1. Click on your storage account to display it's configuration pane.
+
+2. Click on the blob service
+
+    ![blob creation](./doc/assets/main-readme/000011.jpg)
+
+3. Click on the container button, give a name (such as tfstate) and set the access to private.
+
+The result should be like shown bellow:
+
+  ![blob created](./doc/assets/main-readme/000012.jpg)
+
+Your launchpad is now ready to recieve your tfstate file.
+
+### Prepare your developpment environment
 
 - Open the repository using the devcontainer in Visual Studio Code
 
@@ -43,17 +111,11 @@ Therefore PLEASE use it!😎
   git checkout -b <branch>
   ```
 
-- Rename the infra folder to infra-backup and create an new infra folder
-
 ### Code your infrastructure
 
-#### Create your launchpad
+#### Configure Terraform providers and the remote backend, test a first plan, apply proccess
 
-- create a storage account in your subscription and create a container in it with private access.
-
-#### Write your code
-
-1. Create a provider.tf file
+1. Create a provider.tf file, remplace the empty string with your subscription ID.
 
    ```terraform
    terraform {
@@ -80,7 +142,18 @@ Therefore PLEASE use it!😎
    }
    ```
 
-2. Create a main.tf file
+2. Configure your backend
+
+   Add a backend.tfvars file in the infra folder with the configuration of your azure container. Replace the resource group name, with the one created earlier and proceed the same way for the storage account name.
+
+    ```json
+    resource_group_name  = "demo"
+    storage_account_name = "abcd1234"
+    container_name       = "tfstate"
+    key                  = "dev.terraform.tfstate"
+    ```
+
+3. Create a main.tf file
 
    ```terraform
      /**
@@ -104,72 +177,124 @@ Therefore PLEASE use it!😎
    }
  
    resource "azurerm_resource_group" "rg" {
-     name     = azurecaf_name.rg.result
+     name     = "rg-test"
      location = var.location
      tags     = local.tags
    }
    ```
 
-3. Create an naming.tf file
+4. Launch the "Plan command"
 
-   ```
-   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-   resource "azurecaf_name" "rg" {
-     name          = var.resource_name
-     resource_type = "azurerm_resource_group"
-     suffixes      = [var.location_abbreviation, "001"]
-     clean_input   = true
-   }
- 
-   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-   resource "azurecaf_name" "vnet" {
-     name          = var.resource_name
-     resource_type = "azurerm_virtual_network"
-     suffixes      = [var.location_abbreviation, "001"]
-     clean_input   = true
-   }
- 
-   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-   resource "azurecaf_name" "subnet" {
-     name          = var.resource_name
-     resource_type = "azurerm_subnet"
-     suffixes      = [var.location_abbreviation, "001"]
-     clean_input   = true
-   }
- 
-   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-   resource "azurecaf_name" "vm" {
-     name          = var.resource_name
-     resource_type = "azurerm_windows_virtual_machine"
-     suffixes      = [var.location_abbreviation, "001"]
-     clean_input   = true
-   }
- 
-   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-   resource "azurecaf_name" "nic" {
-     name          = var.resource_name
-     resource_type = "azurerm_network_interface"
-     suffixes      = [var.location_abbreviation, "001"]
-     clean_input   = true
-   }
- 
-   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-   resource "azurecaf_name" "publicip" {
-     name          = var.resource_name
-     resource_type = "azurerm_public_ip"
-     suffixes      = [var.location_abbreviation, "001"]
-     clean_input   = true
-   }
- 
-   # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
-   resource "azurecaf_name" "nsg" {
-     name          = var.resource_name
-     resource_type = "azurerm_network_security_group"
-     suffixes      = [var.location_abbreviation, "001"]
-   }
-   ```
+    In your terminal, launch the following command.
 
-4. Create a network.tf file
+    ```bash
+    npm run terraform:plan
+    ```
+
+    This command will generate a plan.out file that will store all the information that need to be done on the infrastructure
+
+5. Launch the "Apply command"
+
+    In your terminal, launch the following command.
+
+    ```bash
+    npm run terraform:apply
+    ```
+
+    This command will apply the change located in the plan.out file and effectively create the resources on azure.
+
+#### Complete your code to create the whole landing zone
+
+1. Amend your main.tf file calculate the resource group name with the azure_caf provider
+
+    ```terraform
+    /**
+    * # Main title
+    *
+    * Everything in this comment block will get extracted.
+    *
+    * You can put simple text or complete Markdown content
+    * here. Subsequently if you want to render AsciiDoc format
+    * you can put AsciiDoc compatible content in this comment
+    * block.
+    * Start implementing your terraform code here 😎
+    */
+  
+    locals {
+      tags = {
+        "env"  = "training"
+        "team" = "petroineos"
+        "date" = var.localdate
+      }
+    }
+  
+    resource "azurerm_resource_group" "rg" {
+      name     = azurecaf_name.rg.result
+      location = var.location
+      tags     = local.tags
+    }
+    ```
+
+2. Create an naming.tf file
+
+    ```
+    # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+    resource "azurecaf_name" "rg" {
+      name          = var.resource_name
+      resource_type = "azurerm_resource_group"
+      suffixes      = [var.location_abbreviation, "001"]
+      clean_input   = true
+    }
+  
+    # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+    resource "azurecaf_name" "vnet" {
+      name          = var.resource_name
+      resource_type = "azurerm_virtual_network"
+      suffixes      = [var.location_abbreviation, "001"]
+      clean_input   = true
+    }
+  
+    # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+    resource "azurecaf_name" "subnet" {
+      name          = var.resource_name
+      resource_type = "azurerm_subnet"
+      suffixes      = [var.location_abbreviation, "001"]
+      clean_input   = true
+    }
+  
+    # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+    resource "azurecaf_name" "vm" {
+      name          = var.resource_name
+      resource_type = "azurerm_windows_virtual_machine"
+      suffixes      = [var.location_abbreviation, "001"]
+      clean_input   = true
+    }
+  
+    # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+    resource "azurecaf_name" "nic" {
+      name          = var.resource_name
+      resource_type = "azurerm_network_interface"
+      suffixes      = [var.location_abbreviation, "001"]
+      clean_input   = true
+    }
+  
+    # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+    resource "azurecaf_name" "publicip" {
+      name          = var.resource_name
+      resource_type = "azurerm_public_ip"
+      suffixes      = [var.location_abbreviation, "001"]
+      clean_input   = true
+    }
+  
+    # cf . https://registry.terraform.io/providers/aztfmod/azurecaf/latest/docs/resources/azurecaf_name
+    resource "azurecaf_name" "nsg" {
+      name          = var.resource_name
+      resource_type = "azurerm_network_security_group"
+      suffixes      = [var.location_abbreviation, "001"]
+    }
+    ```
+
+3. Create a network.tf file
 
    ```  
    # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network
@@ -212,7 +337,7 @@ Therefore PLEASE use it!😎
    }
    ```
 
-5. Create a security.tf file
+4. Create a security.tf file
 
    ```
    # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_security_group
@@ -243,7 +368,7 @@ Therefore PLEASE use it!😎
    }
    ```
 
-6. create a variable.tf file
+5. create a variable.tf file
 
    ```
    variable "location" {
@@ -281,7 +406,7 @@ Therefore PLEASE use it!😎
    }
    ```
 
-7. create a virtualmachine.tf file
+6. create a virtualmachine.tf file
 
    ```
    # cf . https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_virtual_machine
@@ -309,7 +434,7 @@ Therefore PLEASE use it!😎
  
    ```
 
-8. Create an ouput.tf file
+7. Create an ouput.tf file
 
    ```
    output "rg_name" {
@@ -328,37 +453,48 @@ Therefore PLEASE use it!😎
    }
    ```
 
-#### Configure your backend
+8. Generate your variable file and populate it
 
-   Add a backend.tfvars file in the infra folder with the configuration of your azure container.
+    Generate terraform.tfvars file with the following command and update variables
 
-  ```json
-  resource_group_name  = "demo"
-  storage_account_name = "abcd1234"
-  container_name       = "tfstate"
-  key                  = "dev.terraform.tfstate"
-  ```
+    ```bash
+      npm run terraform:generate-tfvars
+    ```
 
-#### Generate your variable file and populate it
+    A brand terraform.tfvars file must appear in your infra folder. Its a key value file that looks like this one:
 
-   Generate terraform.tfvars file with the following command and update variables
+    ```
+    admin_password        = ":your very strong password"
+    admin_username        = "your admin user name"
+    localdate             = "15122022"
+    location              = "North Europe"
+    location_abbreviation = "northeu"
+    resource_name         = "mpe"
+    ```
 
-```bash
-  npm run terraform:generate-tfvars
-```
+    Please fill the information
 
-   A brand terraform.tfvars file must appear in your infra folder. Its a key value file that looks like this one:
+9. Launch the "Plan command"
 
-   ```
-   admin_password        = ":your very strong password"
-   admin_username        = "your admin user name"
-   localdate             = "15122022"
-   location              = "North Europe"
-   location_abbreviation = "northeu"
-   resource_name         = "mpe"
-   ```
+    In your terminal, launch the following command.
 
-   Please fill the information
+    ```bash
+    npm run terraform:plan
+    ```
+
+    This command will generate a plan.out file that will store all the information that need to be done on the infrastructure, In our case it will destroy the resource group created in the previous plan apply operation and recreate the whole architecture.
+
+10. Launch the "Apply command"
+
+    In your terminal, launch the following command.
+
+    ```bash
+    npm run terraform:apply
+    ```
+
+    This command will apply the change located in the plan.out file and effectively create the resources on azure.
+
+### Main terminal commands used while developping
 
 #### Plan your infrastructure
 
